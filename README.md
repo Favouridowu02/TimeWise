@@ -18,100 +18,66 @@ Framework: Flask
 Database: PostgreSQL
 Caching: Redis
 Notifications: Firebase
-📦 Installation
-Prerequisites
-Ensure you have the following installed:
 
-Node.js & npm/yarn
-Python (3.8+)
-PostgreSQL
-Redis
-Clone the Repository
-sh
-Copy
-Edit
-git clone https://github.com/your-username/timewise.git
-cd timewise
-Backend Setup
-Navigate to the backend directory:
-sh
-Copy
-Edit
-cd backend
-Create and activate a virtual environment:
-sh
-Copy
-Edit
-python -m venv venv
-source venv/bin/activate  # On Windows, use venv\Scripts\activate
-Install dependencies:
-sh
-Copy
-Edit
-pip install -r requirements.txt
-Set up environment variables in a .env file:
-env
-Copy
-Edit
-DATABASE_URL=your_postgresql_url
-REDIS_URL=your_redis_url
-FIREBASE_CONFIG=your_firebase_config
-Run the backend server:
-sh
-Copy
-Edit
-flask run
-Frontend Setup
-Navigate to the frontend directory:
-sh
-Copy
-Edit
-cd ../frontend
-Install dependencies:
-sh
-Copy
-Edit
-npm install
-Start the Next.js development server:
-sh
-Copy
-Edit
-npm run dev
-Mobile Setup (React Native)
-Navigate to the mobile directory:
-sh
-Copy
-Edit
-cd ../mobile
-Install dependencies:
-sh
-Copy
-Edit
-npm install
-Run the app on an emulator or physical device:
-sh
-Copy
-Edit
-npm run android  # For Android  
-npm run ios      # For iOS  
-🏗 Roadmap
- Task categorization based on priority & deadlines
- AI-powered productivity suggestions
- Dark mode support
- Team collaboration features
-🤝 Contributing
-We welcome contributions! To contribute:
+Folder Structure
 
-Fork the repository
-Clone your fork
-Create a feature branch (git checkout -b feature-name)
-Commit your changes (git commit -m "Add feature-name")
-Push to your branch (git push origin feature-name)
-Open a pull request
-📝 License
-This project is licensed under the MIT License. See the LICENSE file for details.
+TimeWise/
+│── Backend/                  # Flask Backend (API)
+│   ├── app/                  
+│   │   ├── __init__.py        # App initialization
+│   │   ├── config.py          # App configurations
+│   │   ├── models.py          # Database models (SQLAlchemy)
+│   │   ├── routes/            # API routes (modularized)
+│   │   │   ├── __init__.py    # Route initialization
+│   │   │   ├── auth.py        # Authentication routes
+│   │   │   ├── tasks.py       # Task management routes
+│   │   │   ├── analytics.py   # Time tracking & analytics
+│   │   ├── services/          # Business logic (separate from routes)
+│   │   │   ├── auth_service.py
+│   │   │   ├── task_service.py
+│   │   │   ├── analytics_service.py
+│   │   ├── utils/             # Helper functions
+│   │   │   ├── security.py    # Hashing, JWT helpers
+│   │   │   ├── redis_cache.py # Redis utilities
+│   ├── tests/                 # Unit tests
+│   ├── migrations/            # Database migrations (Alembic)
+│   ├── requirements.txt       # Python dependencies
+│   ├── run.py                 # Entry point for the Flask app
+│
+├── Web/                      # Next.js Web Frontend
+│   ├── public/               # Static files (favicon, images, etc.)
+│   ├── src/                  
+│   │   ├── components/        # Reusable UI components
+│   │   ├── pages/             # Next.js pages (index.tsx, dashboard.tsx)
+│   │   ├── services/          # API calls to Flask backend
+│   │   ├── hooks/             # Custom hooks
+│   │   ├── context/           # Global state (Auth context, theme, etc.)
+│   │   ├── styles/            # CSS/SCSS files
+│   │   ├── utils/             # Helper functions
+│   │   ├── config/            # Environment variables & API base URL
+│   ├── .env                   # Environment variables
+│   ├── package.json           # Dependencies
+│
+├── Mobile/                   # React Native Mobile App
+│   ├── src/
+│   │   ├── components/        # Reusable UI components
+│   │   ├── screens/           # App screens (LoginScreen, Dashboard)
+│   │   ├── services/          # API calls to Flask backend
+│   │   ├── hooks/             # Custom React hooks
+│   │   ├── context/           # Global state management
+│   │   ├── utils/             # Helper functions
+│   ├── .env                   # Environment variables
+│   ├── package.json           # Dependencies
+│
+├── infrastructure/            # DevOps & Deployment
+│   ├── docker/                # Docker-related files
+│   ├── nginx/                 # Nginx configuration
+│   ├── scripts/               # Automation scripts
+│   ├── docker-compose.yml     # Docker setup for all services
+│
+├── Docs/                      # Documentation
+│   ├── api_spec.md            # API documentation
+│   ├── architecture.md        # System architecture
+│
+└── README.md                  # Project overview
 
-🌟 Support
-If you like this project, please ⭐ Star this repository! Feel free to open issues for feature requests or bug reports.
-
-🔗 Follow the project for updates! 🚀
