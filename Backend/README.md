@@ -17,21 +17,32 @@ Authentication: JWT (JSON Web Token)
 Notifications: Firebase
 Environment Management: dotenv
 
-│── app/
+This the API for TimeWise
+│── api/
+│   ├── v1/
+│   │   ├── routes/
+│   │   │   ├── auth_routes.py
+│   │   │   ├── task_routes.py
+│   │   │   ├── progress_routes.py
+│   │   │   ├── analytics_routes.py
+│   │   ├── __init__.py
+│   │   ├── app.py
+│   │   ├── config.py
+│
+│── models/                         # Database models
 │   ├── __init__.py
-│   ├── models.py       # Database models
-│   ├── routes/         # API endpoints
-│   │   ├── auth.py
-│   │   ├── tasks.py
-│   │   ├── notifications.py
-│   ├── services/       # Business logic (email, notifications, etc.)
-│   ├── config.py       # App configuration
-│   ├── utils.py        # Utility functions
-│── migrations/         # Database migrations
-│── tests/              # Unit tests
-│── .env                # Environment variables
+│   ├── base_model.py               # Base models
+│   ├── user.py
+│   ├── task.py
+│   ├── progress.py
+│   ├── analytics.py
+│
+|
+│── migrations/ (Flask-Migrate directory)
+│── .env
 │── requirements.txt
-│── run.py              # Entry point
+│── run.py
+
 
 Authentication
 POST /api/auth/register – Register a new user
