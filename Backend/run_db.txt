@@ -1,0 +1,4 @@
+After Downloading the postgresql: using sudo apt install postgresql
+ Run this command `sudo -i -u postgres`. This command is used to change your account to the super user that comes with postgresql
+ 
+Refer to postgresql documentation for more information on the database set up.
