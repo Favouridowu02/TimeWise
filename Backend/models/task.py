@@ -5,6 +5,8 @@
 from sqlalchemy.dialects.postgresql import UUID
 from .base_model import db, BaseModel
 from datetime import datetime, timedelta
+from sqlalchemy.sql import func
+from models.progress import Progress
 
 
 class Task(BaseModel):
@@ -27,3 +29,10 @@ class Task(BaseModel):
 
     def __str__(self):
         return f"<Task {self.title} - {self.priority} {self.id}>"
+    
+    def calculate_total_time_spent(self):
+        """Calculate the total time spent on this task based on related progress records."""
+        total_time = db.session.query(func.sum(Progress.duration)).filter_by(task_id=self.id).scalar()
+        self.total_time_spent = total_time or timedelta(seconds=0)
+        self.save()
+        return self.total_time_spent
