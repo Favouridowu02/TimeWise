@@ -25,13 +25,35 @@ class BaseModel(db.Model):
 
     def save(self):
         """Save the instance to the database."""
-        db.session.add(self)
         db.session.commit()
 
-    def delete(self):
+    def delete(self, obj=None):
         """Delete the instance from the database."""
-        db.session.delete(self)
+        if obj is None:
+            db.session.delete(self)
+        else:
+            db.session.delete(obj)
         db.session.commit()
+    
+    def new(self, obj=None):
+        """Create a New instance of the Model"""
+        try:
+            if obj is None:
+                db.session.add(self)
+            else:
+                db.session.add(obj)
+        except Exception as e:
+            print(f"Error adding object: {e}")
+
+    @classmethod
+    def get(cls, **kwargs):
+        """Retrieve an instance from the Database"""
+        user = None
+        try:
+            user = cls.query.filter_by(**kwargs).first()
+        except Exception as e:
+            print(f"Error retrieving an object from the database")
+        return user
 
     @classmethod
     def all(cls):
