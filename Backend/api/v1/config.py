@@ -1,5 +1,6 @@
 import os
 from dotenv import load_dotenv
+from os import getenv
 
 # Loads environment variables from .env file
 load_dotenv()
@@ -20,7 +21,14 @@ class Config:
     SQLALCHEMY_TRACK_MODIFICATIONS = False
 
     # Debug Mode
-    DEBUG = os.getenv("FLASK_DEBUG", "False").lower() == "true"
+    DEBUG = getenv("FLASK_DEBUG", "False").lower() == "true"
+
+    # Email -- To be Updated
+    MAIL_SERVER = getenv('MAIL_SERVER')
+    MAIL_PORT = getenv('MAIL_PORT')
+    MAIL_USE_TLS = True
+    MAIL_USERNAME = getenv('MAIL_USERNAME')
+    MAIL_PASSWORD = getenv('MAIL_PASSWORD') 
 
 
 class TestConfig(Config):
@@ -38,7 +46,6 @@ class ProductionConfig(Config):
     """Configuration for production mode."""
     DEBUG = False
     SQLALCHEMY_DATABASE_URI = os.getenv("DATABASE_URL")
-
 
 
 # Dictionary to select configurations dynamically when imported
