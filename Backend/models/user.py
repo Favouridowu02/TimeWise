@@ -17,7 +17,9 @@ class User(BaseModel):
     language = db.Column(db.String(10), default='en')
     profile_image = db.Column(db.String(255))
     bio = db.Column(db.Text)
+    email_verified = db.Column(db.Boolean, default=False)  # Add this field
 
+    
     # Relationship
     tasks = db.relationship('Task', back_populates='user', lazy='select', cascade='all, delete-orphan')
     progress = db.relationship('Progress', back_populates='user', cascade='all, delete-orphan')
