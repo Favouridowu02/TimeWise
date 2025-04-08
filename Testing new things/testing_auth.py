@@ -13,6 +13,7 @@ import secrets
 
 app = Flask(__name__)
 
+# When writing the code for development ensure you import the secre_key from the .env
 secret_key = secrets.token_urlsafe()
 
 app.config["JWT_SECRET_KEY"] = secret_key
