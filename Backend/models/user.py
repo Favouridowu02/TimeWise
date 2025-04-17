@@ -6,6 +6,12 @@ from sqlalchemy.dialects.postgresql import UUID
 from .base_model import db, BaseModel
 from datetime import datetime
 from werkzeug.security import generate_password_hash, check_password_hash
+import enum
+
+# Define roles
+class UserRole(enum.Enum):
+    USER = 'user'
+    ADMIN = 'admin'
 
 class User(BaseModel):
     __tablename__ = 'users'
@@ -17,7 +23,8 @@ class User(BaseModel):
     language = db.Column(db.String(10), default='en')
     profile_image = db.Column(db.String(255))
     bio = db.Column(db.Text)
-    email_verified = db.Column(db.Boolean, default=False)  # Add this field
+    email_verified = db.Column(db.Boolean, default=False)
+    role = db.Column(db.Enum(UserRole), default=UserRole.USER, nullable=False) # Add role field
 
     
     # Relationship
