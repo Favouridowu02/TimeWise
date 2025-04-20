@@ -9,7 +9,7 @@ TimeWise is a cross-platform productivity app designed to help users efficiently
 ✅ Real-Time Sync & Notifications – Stay updated with Firebase-powered alerts
 ✅ Performance-Optimized – Redis caching for faster operations
 
-🛠 Tech Stack
+🛠 Tech Stack h
 Frontend
 Web: Next.js
 Mobile: React Native
