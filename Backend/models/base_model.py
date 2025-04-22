@@ -11,6 +11,7 @@ import uuid
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
 from sqlalchemy.dialects.postgresql import UUID
+import logging
 
 db = SQLAlchemy()
 
@@ -25,15 +26,25 @@ class BaseModel(db.Model):
 
     def save(self):
         """Save the instance to the database."""
-        db.session.commit()
+        try:
+            db.session.commit()
+            logging.info(f"Saved {self} to the database.")
+        except Exception as e:
+            logging.error(f"Error saving {self}: {e}")
+            db.session.rollback()
 
     def delete(self, obj=None):
         """Delete the instance from the database."""
-        if obj is None:
-            db.session.delete(self)
-        else:
-            db.session.delete(obj)
-        db.session.commit()
+        try:
+            if obj is None:
+                db.session.delete(self)
+            else:
+                db.session.delete(obj)
+            db.session.commit()
+            logging.info(f"Deleted {self} from the database.")
+        except Exception as e:
+            logging.error(f"Error deleting {self}: {e}")
+            db.session.rollback()
     
     def new(self, obj=None):
         """Create a New instance of the Model"""
@@ -42,18 +53,23 @@ class BaseModel(db.Model):
                 db.session.add(self)
             else:
                 db.session.add(obj)
+            logging.info(f"Added new instance: {obj or self}")
         except Exception as e:
-            print(f"Error adding object: {e}")
+            logging.error(f"Error adding object: {e}")
 
     @classmethod
     def get(cls, **kwargs):
         """Retrieve an instance from the Database"""
-        user = None
+        instance = None
         try:
-            user = cls.query.filter_by(**kwargs).first()
+            instance = cls.query.filter_by(**kwargs).first()
+            if instance:
+                logging.debug(f"Retrieved instance {instance} using filter {kwargs}")
+            else:
+                logging.debug(f"No instance found for {cls.__name__} with filter {kwargs}")
         except Exception as e:
-            print(f"Error retrieving an object from the database")
-        return user
+            logging.exception(f"Error retrieving {cls.__name__} object from the database with filter {kwargs}") 
+        return instance
 
     @classmethod
     def all(cls):
