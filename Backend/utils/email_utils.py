@@ -3,7 +3,10 @@
     This Module contains the Utilities for sending Emails.
 """
 from flask_mail import Message
+import logging # Import logging
 
+# Get a logger for this module
+logger = logging.getLogger(__name__)
 
 def send_email(subject, recipients, body):
     """
@@ -13,13 +16,16 @@ def send_email(subject, recipients, body):
             - recipients: The list of recipients
             - body: The body of the Email
         Returns:
-            - None
+            - Boolean indicating success or failure
     """
-    from api.v1.app import mail
+    # Import mail instance here to avoid circular imports if mail is initialized in app.py
+    from api.v1.app import mail 
     try:
         msg = Message(subject=subject, recipients=recipients, body=body)
         mail.send(msg)
+        logger.info(f"Email sent successfully to {recipients} with subject '{subject}'")
         return True
     except Exception as e:
-        print(f"Error sending email: {e}")
+        # Use logger.exception to include stack trace for errors
+        logger.exception(f"Error sending email to {recipients} with subject '{subject}'") 
         return False
