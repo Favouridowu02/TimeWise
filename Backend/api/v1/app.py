@@ -12,18 +12,22 @@ from api.v1.config import config_dict
 from api.v1.views.auth import auth_bp
 from api.v1.views.tasks import task_bp
 from api.v1.views.progress import progress_bp
-from api.v1.views.users import user_bp
+from api.v1.views.users import admin_bp
 from api.v1.views.analytics import analytics_bp
 from models.base_model import db
 from os import getenv
 from dotenv import load_dotenv
 from flask_jwt_extended import JWTManager
+from utils.logging_utils import setup_logging
 
 load_dotenv()
 
 
 def create_app(config_name="development"):
     """Initialize the Flask app."""
+    # Setup logging
+    setup_logging(log_file="logs/app.log")
+
     app = Flask(__name__)
     app.config.from_object(config_dict[config_name])
 
@@ -43,7 +47,7 @@ def create_app(config_name="development"):
 
     # Register blueprints
     app.register_blueprint(auth_bp, url_prefix="/api/v1/auth")
-    app.register_blueprint(user_bp, url_prefix="/api/v1/user")
+    app.register_blueprint(admin_bp, url_prefix="/api/v1/admin")
     app.register_blueprint(task_bp, url_prefix="/api/v1/task")
     app.register_blueprint(progress_bp, url_prefix="/api/v1/progress")
     app.register_blueprint(analytics_bp, url_prefix="/api/v1/analytics")
@@ -68,11 +72,13 @@ def create_app(config_name="development"):
     @app.errorhandler(404)
     def not_found(error):
         """Return a custom 404 error."""
+        app.logger.warning(f"404 Error: {error}")
         return jsonify({'error': 'Not found'}), 404
 
     @app.errorhandler(500)
     def server_error(error):
         """Return a custom 500 error."""
+        app.logger.error(f"500 Error: {error}")
         return jsonify({'error': 'Internal server error'}), 500
 
     @app.route("/")
