@@ -66,7 +66,7 @@ def update_user_by_id(user_id):
         return jsonify({'error': 'Invalid input'}), 400
 
     # Fields that an admin might update (excluding password for now)
-    updatable_fields = ['name', 'username', 'email', 'timezone', 'language', 'profile_image', 'bio', 'email_verified']
+    updatable_fields = ['name', 'username', 'email', 'timezone', 'language', 'profile_image', 'bio', 'email_verified', 'role']
     
     try:
         for field in updatable_fields:
@@ -117,6 +117,9 @@ def update_user_role(user_id):
     """
     [Admin] Update the role of a specific user.
     """
+    # RBAC check is now handled by the decorator
+    current_user_id = get_jwt_identity()
+    logging.info(f"User {current_user_id} attempting to update user {user_id} role.")
     data = request.get_json()
     if not data or 'role' not in data:
         return jsonify({"error": "Missing 'role' in request body"}), 400
@@ -125,20 +128,24 @@ def update_user_role(user_id):
     try:
         # Validate the role string against the UserRole enum
         new_role = UserRole[new_role_str]
-    except KeyError:
+    except KeyError as e:
         valid_roles = [role.name for role in UserRole]
+        logging.error(f"Invalid Role - Error updating user role {user_id}: {e}")
         return jsonify({"error": f"Invalid role. Valid roles are: {valid_roles}"}), 400
 
     try:
-        user = User.query.get(str(user_id))
+        user_id = uuid.UUID(str(user_id))
+        user = db.session.get(User, user_id)
+        print("\n\n\n","I have gotten here", "\n\n\n")
         if not user:
             return jsonify({"error": "User not found"}), 404
 
         user.role = new_role
         db.session.commit()
+        logging.info(f"User {user_id} role successfully updated to {new_role_str} by {current_user_id}.")
 
         return jsonify({"message": f"User {user.username}'s role updated to {new_role.value}"}), 200
     except Exception as e:
         db.session.rollback()
-        # Log the error e
+        logging.error(f"Error updating user role {user_id}: {e}")
         return jsonify({"error": "Failed to update user role", "details": str(e)}), 500
