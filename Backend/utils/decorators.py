@@ -8,7 +8,7 @@ from flask_jwt_extended import get_jwt_identity, verify_jwt_in_request
 from flask_jwt_extended.exceptions import JWTDecodeError, NoAuthorizationError
 from models.user import User, UserRole
 import logging
-
+import uuid
 
 def admin_required(fn):
     """
@@ -33,6 +33,7 @@ def admin_required(fn):
 
         try:
             # Retrieve user from database
+            user_id = uuid.UUID(user_id)
             user = User.get(id=user_id)
             if not user:
                 logging.warning(f"Admin access denied: User {user_id} not found.")
