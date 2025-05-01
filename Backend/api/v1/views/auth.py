@@ -4,14 +4,17 @@
 """
 from flask import Blueprint, request, jsonify
 from flask_jwt_extended import create_access_token, jwt_required, get_jwt_identity, decode_token
-# from models.base_model import db
+from models.base_model import db
 from models.user import User
+# from flask import current_app
 from datetime import datetime
-# import uuid
+from datetime import timedelta
+import uuid
 from flask_jwt_extended import get_jwt, unset_jwt_cookies
 from werkzeug.security import generate_password_hash
-import datetime
-from utils.email_utils import send_email  # Import the email utility
+from datetime import datetime
+from utils.email_utils import send_email
+import logging
 
 auth_bp = Blueprint('auth', __name__)
 
@@ -30,6 +33,10 @@ def register():
     if User.get(email=data['email']):
         return jsonify({'error': 'User with this email already exists'}), 409
 
+    # Check if user already exists
+    if User.get(username=data['username']):
+        return jsonify({'error': 'User with this username already exists'}), 409
+
     # Create new user
     user = User(
         email=data['email'],
@@ -38,48 +45,70 @@ def register():
     )
     user.set_password(data['password'])
 
-    # Save to database
-    user.new(user)  # Add the user instance to the session
-    user.save()     # Commit the session
-    
-    # Generate access token
-    access_token = create_access_token(identity=user.id)
+    try:
+        # Save to database
+        user.new(user)
+        user.save()
+        
+        # Generate access token
+        access_token = create_access_token(identity=user.id)
 
-    return jsonify({
-        'message': 'User registered successfully',
-        'access_token': access_token,
-        'user': user.to_json()
-    }), 201
+        logging.info(f"User registered successfully: {user.email}")
+        return jsonify({
+            'message': 'User registered successfully',
+            'access_token': access_token,
+            'user': user.to_json()
+        }), 201
+    except Exception as e:
+        logging.error(f"Error during registration: {e}")
+        return jsonify({'error': 'Registration failed'}), 500
 
 @auth_bp.route('/login', methods=['POST'])
 def login():
     data = request.get_json()
 
     # Validate required fields
-    if not data or 'email' not in data or 'password' not in data:
-        return jsonify({'error': 'Email and password are required'}), 400
+    if not data or 'password' not in data or ('email' not in data and 'username' not in data):
+        return jsonify({'error': 'Username or email and password are required'}), 400
 
-    # Find user by email
-    user = User.get(email=data['email'])
+    # Find user by email or username
+    user = None
+    if 'email' in data:
+        user = User.get(email=data['email'])
+    elif 'username' in data:
+        user = User.get(username=data['username'])
 
     # Check if user exists and password is correct
     if not user or not user.check_password(data['password']):
-        return jsonify({'error': 'Invalid email or password'}), 401
+        return jsonify({'error': 'Invalid credentials'}), 401
 
-    # Generate access token
-    access_token = create_access_token(identity=user.id)
-    
-    return jsonify({
-        'message': 'Login successful',
-        'access_token': access_token,
-        'user': user.to_json()
-    }), 200
+    try:
+        # Generate access token
+        access_token = create_access_token(identity=user.id)
+        
+        logging.info(f"User logged in: {user.email}")
+        return jsonify({
+            'message': 'Login successful',
+            'access_token': access_token,
+            'user': user.to_json()
+        }), 200
+    except Exception as e:
+        logging.error(f"Error during login: {e}")
+        return jsonify({'error': 'Login failed'}), 500
 
 @auth_bp.route('/profile', methods=['GET'])
 @jwt_required()
 def get_profile():
+    """Get the user's profile information."""
     user_id = get_jwt_identity()
-    user = User.query.get(user_id)
+
+    try:
+        # convert user_id to UUID
+        user_id = uuid.UUID(user_id)
+    except ValueError:
+        return jsonify({'error': 'Invalid user ID format'}), 400
+
+    user = db.session.get(User, user_id)
     
     if not user:
         return jsonify({'error': 'User not found'}), 404
@@ -89,8 +118,15 @@ def get_profile():
 @auth_bp.route('/profile', methods=['PUT'])
 @jwt_required()
 def update_profile():
+    """Update the user's profile information."""
     user_id = get_jwt_identity()
-    user = User.query.get(user_id)
+    
+    try:
+        user_id = uuid.UUID(user_id)
+    except ValueError:
+        return jsonify({'error': 'Invalid user ID format'}), 400
+
+    user = db.session.get(User, user_id)
     
     if not user:
         return jsonify({'error': 'User not found'}), 404
@@ -118,20 +154,28 @@ def update_profile():
 @auth_bp.route('/logout', methods=['POST'])
 @jwt_required()
 def logout():
+    """Logout the user by invalidating the JWT token."""
     response = jsonify({'message': 'Logout successful'})
     unset_jwt_cookies(response)  # Invalidate the current token by unsetting cookies
     return response, 200
 
 @auth_bp.route('/logout', methods=['GET'])
 def logout_status():
+    """Check if the user is logged out."""
     return jsonify({"message": "Use POST to log out"}), 400
 
 
 @auth_bp.route('/delete', methods=['DELETE'])
 @jwt_required()
 def delete_account():
+    """Delete the user's account."""
     user_id = get_jwt_identity()
-    user = User.get(user_id)
+
+    try:
+        user_id = uuid.UUID(user_id)
+    except ValueError:
+        return jsonify({'error': 'Invalid user ID format'}), 400
+    user = db.session.get(User, user_id)
     
     if not user:
         return jsonify({'error': 'User not found'}), 404
@@ -144,28 +188,36 @@ def delete_account():
 @auth_bp.route('/password-reset-request', methods=['POST'])
 def password_reset_request():
     """Request a password reset token."""
-    data = request.get_json()
+    try:
+        data = request.get_json()
 
-    # Validate email
-    if not data or 'email' not in data:
-        return jsonify({'error': 'Email is required'}), 400
+        # Validate email
+        if not data or 'email' not in data:
+            logging.warning("Missing email in password reset request")
+            return jsonify({'error': 'Email is required'}), 400
 
-    user = User.get(email=str(data['email']))
-    if not user:
-        return jsonify({'error': 'User with this email does not exist'}), 404
+        # user = User.get(email=str(data['email']))
+        user = User.query.filter_by(email=data['email']).first()
+        if not user:
+            logging.info(f"No user found for email: {data['email']}")
+            return jsonify({'error': 'User with this email does not exist'}), 404
 
-    # Generate a password reset token (valid for 15 minutes)
-    reset_token = create_access_token(
-        identity=user.id,
-        expires_delta=datetime.timedelta(minutes=15)
-    )
+        # Generate a password reset token (valid for 15 minutes)
+        reset_token = create_access_token(
+            identity=user.id,
+            expires_delta=timedelta(minutes=15)
+        )
 
-    # In a real-world scenario, send this token to the user's email
-    # For now, return it in the response for testing purposes
-    return jsonify({
-        'message': 'Password reset token generated successfully',
-        'reset_token': reset_token
-    }), 200
+        # In a real-world scenario, send this token to the user's email
+        # For now, return it in the response for testing purposes
+        logging.info(f"Password reset token generated for user: {data['email']}")
+        return jsonify({
+            'message': 'Password reset token generated successfully',
+            'reset_token': reset_token
+        }), 200
+    except Exception as e:
+        logging.error(f"Error processing password reset request: {str(e)}")
+        return jsonify({"msg": "Internal server error"}), 500
 
 
 @auth_bp.route('/password-reset', methods=['POST'])
@@ -185,11 +237,12 @@ def password_reset():
         user_id = decoded_token.get('sub')
         if not user_id:
             return jsonify({'error': 'Invalid reset token'}), 400
+        user_id = uuid.UUID(user_id)
     except Exception as e:
         return jsonify({'error': 'Invalid or expired reset token'}), 400
 
     # Find the user
-    user = User.get(id=user_id)
+    user = db.session.get(User, user_id)
     if not user:
         return jsonify({'error': 'User not found'}), 404
 
