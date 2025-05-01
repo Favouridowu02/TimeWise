@@ -11,7 +11,6 @@ from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
 from sqlalchemy.dialects.postgresql import UUID
 import logging
-import uuid 
 
 db = SQLAlchemy()
 
