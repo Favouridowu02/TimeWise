@@ -6,12 +6,12 @@
     modules for handling datetime operations. This base model would be
     extended by other models to interact with the database.
 """
-
 import uuid
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
 from sqlalchemy.dialects.postgresql import UUID
 import logging
+import uuid 
 
 db = SQLAlchemy()
 
@@ -78,7 +78,20 @@ class BaseModel(db.Model):
 
     def to_json(self):
         """Convert the model instance to a JSON-friendly dictionary."""
-        return {column.name: str(getattr(self, column.name)) for column in self.__table__.columns}
+        from models.user import UserRole
+        result = {}
+        for column in self.__table__.columns:
+            if column.name == 'password_hash':
+                continue
+            value = getattr(self, column.name)
+            if isinstance(value, UserRole):
+                value = value.value
+            elif isinstance(value, datetime):
+                value = value.isoformat()
+            else:
+                value = str(value)
+            result[column.name] = value
+        return result
 
     def __str__(self):
         """Return a string representation of the model instance."""
