@@ -94,5 +94,5 @@ def create_user_analytics():
 
     except Exception as e:
         logger.exception(f"Error creating analytics entry for user {user_id}")
-        db.session.rollback()
+        db.session.rollback() 
         return jsonify({'error': 'Failed to create analytics entry'}), 500
