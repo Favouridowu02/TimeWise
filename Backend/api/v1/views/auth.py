@@ -15,11 +15,62 @@ from werkzeug.security import generate_password_hash
 from datetime import datetime
 from utils.email_utils import send_email
 import logging
+from flasgger import swag_from
 
 auth_bp = Blueprint('auth', __name__)
 
 
 @auth_bp.route('/register', methods=['POST'])
+@swag_from({
+    'tags': ['Authentication'],
+    'summary': 'Register a new user',
+    'description': 'Register a new user with email, password, name, and username.',
+    'parameters': [
+        {
+            'name': 'body',
+            'in': 'body',
+            'required': True,
+            'schema': {
+                'type': 'object',
+                'properties': {
+                    'email': {'type': 'string', 'description': 'User email'},
+                    'password': {'type': 'string', 'description': 'User password'},
+                    'name': {'type': 'string', 'description': 'Full name'},
+                    'username': {'type': 'string', 'description': 'Username'}
+                },
+                'required': ['email', 'password', 'name', 'username']
+            }
+        }
+    ],
+    'responses': {
+        201: {
+            'description': 'User registered successfully',
+            'examples': {
+                'application/json': {
+                    'message': 'User registered successfully',
+                    'access_token': 'jwt-token',
+                    'user': {
+                        'email': 'user@example.com',
+                        'name': 'User Name',
+                        'username': 'username'
+                    }
+                }
+            }
+        },
+        400: {
+            'description': 'Missing required field',
+            'examples': {'application/json': {'error': 'Missing required field: email'}}
+        },
+        409: {
+            'description': 'User already exists',
+            'examples': {'application/json': {'error': 'User with this email already exists'}}
+        },
+        500: {
+            'description': 'Registration failed',
+            'examples': {'application/json': {'error': 'Registration failed'}}
+        }
+    }
+})
 def register():
     data = request.get_json()
 
@@ -64,6 +115,55 @@ def register():
         return jsonify({'error': 'Registration failed'}), 500
 
 @auth_bp.route('/login', methods=['POST'])
+@swag_from({
+    'tags': ['Authentication'],
+    'summary': 'User login',
+    'description': 'Login with email/username and password to receive a JWT token.',
+    'parameters': [
+        {
+            'name': 'body',
+            'in': 'body',
+            'required': True,
+            'schema': {
+                'type': 'object',
+                'properties': {
+                    'email': {'type': 'string', 'description': 'User email'},
+                    'username': {'type': 'string', 'description': 'Username'},
+                    'password': {'type': 'string', 'description': 'User password'}
+                },
+                'required': ['password']
+            }
+        }
+    ],
+    'responses': {
+        200: {
+            'description': 'Login successful',
+            'examples': {
+                'application/json': {
+                    'message': 'Login successful',
+                    'access_token': 'jwt-token',
+                    'user': {
+                        'email': 'user@example.com',
+                        'name': 'User Name',
+                        'username': 'username'
+                    }
+                }
+            }
+        },
+        400: {
+            'description': 'Missing credentials',
+            'examples': {'application/json': {'error': 'Username or email and password are required'}}
+        },
+        401: {
+            'description': 'Invalid credentials',
+            'examples': {'application/json': {'error': 'Invalid credentials'}}
+        },
+        500: {
+            'description': 'Login failed',
+            'examples': {'application/json': {'error': 'Login failed'}}
+        }
+    }
+})
 def login():
     data = request.get_json()
 

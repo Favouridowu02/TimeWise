@@ -8,6 +8,7 @@ from models.base_model import db
 from models.user import User
 from models.task import Task
 from datetime import datetime
+from flasgger import swag_from
 
 
 task_bp = Blueprint('task', __name__)
@@ -15,6 +16,23 @@ task_bp = Blueprint('task', __name__)
 
 @task_bp.route('/tasks', methods=['GET'])
 @jwt_required()
+@swag_from({
+    'tags': ['Tasks'],
+    'summary': 'Get all tasks',
+    'description': 'Get all tasks for the current user.',
+    'responses': {
+        200: {
+            'description': 'List of tasks',
+            'examples': {'application/json': [
+                {'id': 1, 'title': 'Task 1', 'description': 'Desc', 'user_id': 'uuid'}
+            ]}
+        },
+        404: {
+            'description': 'User not found',
+            'examples': {'application/json': {'error': 'User not found'}}
+        }
+    }
+})
 def get_tasks():
     """Get all tasks for the current user."""
     current_user = get_jwt_identity()
@@ -28,6 +46,24 @@ def get_tasks():
 
 @task_bp.route('/tasks/<int:task_id>', methods=['GET'])
 @jwt_required()
+@swag_from({
+    'tags': ['Tasks'],
+    'summary': 'Get task by ID',
+    'description': 'Get a specific task by ID.',
+    'parameters': [
+        {'name': 'task_id', 'in': 'path', 'type': 'integer', 'required': True, 'description': 'Task ID'}
+    ],
+    'responses': {
+        200: {
+            'description': 'Task found',
+            'examples': {'application/json': {'id': 1, 'title': 'Task 1', 'description': 'Desc', 'user_id': 'uuid'}}
+        },
+        404: {
+            'description': 'Task or user not found',
+            'examples': {'application/json': {'error': 'Task not found'}}
+        }
+    }
+})
 def get_task(task_id):
     """Get a specific task by ID."""
     current_user = get_jwt_identity()
@@ -44,6 +80,40 @@ def get_task(task_id):
 
 @task_bp.route('/tasks', methods=['POST'])
 @jwt_required()
+@swag_from({
+    'tags': ['Tasks'],
+    'summary': 'Create task',
+    'description': 'Create a new task for the current user.',
+    'parameters': [
+        {
+            'name': 'body',
+            'in': 'body',
+            'required': True,
+            'schema': {
+                'type': 'object',
+                'properties': {
+                    'title': {'type': 'string', 'description': 'Task title'},
+                    'description': {'type': 'string', 'description': 'Task description'}
+                },
+                'required': ['title', 'description']
+            }
+        }
+    ],
+    'responses': {
+        201: {
+            'description': 'Task created',
+            'examples': {'application/json': {'message': 'Task created successfully', 'task': {'id': 1, 'title': 'Task 1', 'description': 'Desc', 'user_id': 'uuid'}}}
+        },
+        400: {
+            'description': 'Missing required field',
+            'examples': {'application/json': {'error': 'Missing required field: title'}}
+        },
+        404: {
+            'description': 'User not found',
+            'examples': {'application/json': {'error': 'User not found'}}
+        }
+    }
+})
 def create_task():
     """Create a new task."""
     data = request.get_json()
@@ -75,6 +145,36 @@ def create_task():
 
 @task_bp.route('/tasks/<int:task_id>', methods=['PUT'])
 @jwt_required()
+@swag_from({
+    'tags': ['Tasks'],
+    'summary': 'Update task',
+    'description': 'Update a specific task by ID.',
+    'parameters': [
+        {'name': 'task_id', 'in': 'path', 'type': 'integer', 'required': True, 'description': 'Task ID'},
+        {
+            'name': 'body',
+            'in': 'body',
+            'required': True,
+            'schema': {
+                'type': 'object',
+                'properties': {
+                    'title': {'type': 'string'},
+                    'description': {'type': 'string'}
+                }
+            }
+        }
+    ],
+    'responses': {
+        200: {
+            'description': 'Task updated',
+            'examples': {'application/json': {'message': 'Task updated successfully', 'task': {'id': 1, 'title': 'Task 1', 'description': 'Desc', 'user_id': 'uuid'}}}
+        },
+        404: {
+            'description': 'Task or user not found',
+            'examples': {'application/json': {'error': 'Task not found'}}
+        }
+    }
+})
 def update_task(task_id):
     """Update a specific task by ID."""
     data = request.get_json()
@@ -102,6 +202,24 @@ def update_task(task_id):
 
 @task_bp.route('/tasks/<int:task_id>', methods=['DELETE'])
 @jwt_required()
+@swag_from({
+    'tags': ['Tasks'],
+    'summary': 'Delete task',
+    'description': 'Delete a specific task by ID.',
+    'parameters': [
+        {'name': 'task_id', 'in': 'path', 'type': 'integer', 'required': True, 'description': 'Task ID'}
+    ],
+    'responses': {
+        200: {
+            'description': 'Task deleted',
+            'examples': {'application/json': {'message': 'Task deleted successfully'}}
+        },
+        404: {
+            'description': 'Task or user not found',
+            'examples': {'application/json': {'error': 'Task not found'}}
+        }
+    }
+})
 def delete_task(task_id):
     """Delete a specific task by ID."""
     current_user = get_jwt_identity()
@@ -120,6 +238,24 @@ def delete_task(task_id):
 
 @task_bp.route('/tasks/<int:task_id>/complete', methods=['POST'])
 @jwt_required()
+@swag_from({
+    'tags': ['Tasks'],
+    'summary': 'Complete task',
+    'description': 'Mark a task as completed.',
+    'parameters': [
+        {'name': 'task_id', 'in': 'path', 'type': 'integer', 'required': True, 'description': 'Task ID'}
+    ],
+    'responses': {
+        200: {
+            'description': 'Task marked as completed',
+            'examples': {'application/json': {'message': 'Task marked as completed', 'task': {'id': 1, 'title': 'Task 1', 'description': 'Desc', 'user_id': 'uuid'}}}
+        },
+        404: {
+            'description': 'Task or user not found',
+            'examples': {'application/json': {'error': 'Task not found'}}
+        }
+    }
+})
 def complete_task(task_id):
     """Mark a task as completed."""
     current_user = get_jwt_identity()
@@ -141,6 +277,24 @@ def complete_task(task_id):
 
 @task_bp.route('/tasks/<int:task_id>/uncomplete', methods=['POST'])
 @jwt_required()
+@swag_from({
+    'tags': ['Tasks'],
+    'summary': 'Uncomplete task',
+    'description': 'Mark a task as uncompleted.',
+    'parameters': [
+        {'name': 'task_id', 'in': 'path', 'type': 'integer', 'required': True, 'description': 'Task ID'}
+    ],
+    'responses': {
+        200: {
+            'description': 'Task marked as uncompleted',
+            'examples': {'application/json': {'message': 'Task marked as uncompleted', 'task': {'id': 1, 'title': 'Task 1', 'description': 'Desc', 'user_id': 'uuid'}}}
+        },
+        404: {
+            'description': 'Task or user not found',
+            'examples': {'application/json': {'error': 'Task not found'}}
+        }
+    }
+})
 def uncomplete_task(task_id):
     """Mark a task as uncompleted."""
     current_user = get_jwt_identity()
@@ -162,6 +316,28 @@ def uncomplete_task(task_id):
 
 @task_bp.route('/tasks/<int:task_id>/progress', methods=['POST'])
 @jwt_required()
+@swag_from({
+    'tags': ['Tasks'],
+    'summary': 'Update task progress',
+    'description': 'Update the progress of a task.',
+    'parameters': [
+        {'name': 'task_id', 'in': 'path', 'type': 'integer', 'required': True, 'description': 'Task ID'}
+    ],
+    'responses': {
+        200: {
+            'description': 'Task progress updated',
+            'examples': {'application/json': {'message': 'Task progress updated successfully', 'task': {'id': 1, 'title': 'Task 1', 'description': 'Desc', 'user_id': 'uuid'}}}
+        },
+        400: {
+            'description': 'Missing required field',
+            'examples': {'application/json': {'error': 'Missing required field: progress'}}
+        },
+        404: {
+            'description': 'Task or user not found',
+            'examples': {'application/json': {'error': 'Task not found'}}
+        }
+    }
+})
 def update_task_progress(task_id):
     """Update the progress of a task."""
     data = request.get_json()
@@ -187,8 +363,27 @@ def update_task_progress(task_id):
         'task': task.to_json()
     }), 200
 
+
 @task_bp.route('/tasks/<int:task_id>/analytics', methods=['GET'])
 @jwt_required()
+@swag_from({
+    'tags': ['Tasks'],
+    'summary': 'Get task analytics',
+    'description': 'Get analytics for a specific task.',
+    'parameters': [
+        {'name': 'task_id', 'in': 'path', 'type': 'integer', 'required': True, 'description': 'Task ID'}
+    ],
+    'responses': {
+        200: {
+            'description': 'Analytics data',
+            'examples': {'application/json': {'total_time_spent': '1 hour', 'progress': 50, 'completed': True}}
+        },
+        404: {
+            'description': 'Task or user not found',
+            'examples': {'application/json': {'error': 'Task not found'}}
+        }
+    }
+})
 def get_task_analytics(task_id):
     """Get analytics for a specific task."""
     current_user = get_jwt_identity()
@@ -212,6 +407,35 @@ def get_task_analytics(task_id):
 
 @task_bp.route('/tasks/<int:task_id>/analytics', methods=['POST'])
 @jwt_required()
+@swag_from({
+    'tags': ['Tasks'],
+    'summary': 'Update task analytics',
+    'description': 'Update analytics for a specific task.',
+    'parameters': [
+        {'name': 'task_id', 'in': 'path', 'type': 'integer', 'required': True, 'description': 'Task ID'},
+        {
+            'name': 'body',
+            'in': 'body',
+            'required': True,
+            'schema': {
+                'type': 'object',
+                'properties': {
+                    'total_time_spent': {'type': 'string', 'description': 'Total time spent on the task'}
+                }
+            }
+        }
+    ],
+    'responses': {
+        200: {
+            'description': 'Analytics updated',
+            'examples': {'application/json': {'message': 'Task analytics updated successfully', 'task': {'id': 1, 'title': 'Task 1', 'description': 'Desc', 'user_id': 'uuid'}}}
+        },
+        404: {
+            'description': 'Task or user not found',
+            'examples': {'application/json': {'error': 'Task not found'}}
+        }
+    }
+})
 def update_task_analytics(task_id):
     """Update analytics for a specific task."""
     data = request.get_json()

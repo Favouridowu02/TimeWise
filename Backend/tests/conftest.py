@@ -4,6 +4,7 @@
 """
 
 import pytest
+import uuid
 from api.v1.app import create_app
 from models.base_model import db
 from models.user import User, UserRole
@@ -29,17 +30,22 @@ def test_client(test_app):
     """A test client for the app."""
     return test_app.test_client()
 
-@pytest.fixture(scope='function') # Use function scope for user fixtures to ensure isolation
+@pytest.fixture(scope='function')
 def db_session(test_app):
-     """Provides a database session for tests with automatic cleanup."""
-     with test_app.app_context():
+    """Provides a database session for tests with automatic cleanup."""
+    with test_app.app_context():
         yield db.session
         db.session.rollback()
 
 @pytest.fixture(scope='function')
 def new_user(db_session):
-    """Create a test user and add to session."""
-    user = User(name="Test User", username="testuser", email="test@example.com")
+    """Create a test user and add to session with unique email/username."""
+    unique_id = uuid.uuid4().hex
+    user = User(
+        name="Test User",
+        username=f"testuser_{unique_id}",
+        email=f"test_{unique_id}@example.com"
+    )
     user.set_password("password123")
     db_session.add(user)
     db_session.commit()
@@ -47,18 +53,28 @@ def new_user(db_session):
 
 @pytest.fixture(scope='function')
 def another_user(db_session):
-    """Create another test user."""
-    user = User(name="Another User", username="anotheruser", email="another@example.com")
+    """Create another test user with unique email/username."""
+    unique_id = uuid.uuid4().hex
+    user = User(
+        name="Another User",
+        username=f"anotheruser_{unique_id}",
+        email=f"another_{unique_id}@example.com"
+    )
     user.set_password("password456")
     db_session.add(user)
     db_session.commit()
     return user
 
-
 @pytest.fixture(scope='function')
 def admin_user(db_session):
-    """Creates an admin user and adds to session."""
-    admin = User(name="Admin User", username="adminuser", email="admin@example.com", role=UserRole.ADMIN)
+    """Creates an admin user and adds to session with unique email/username."""
+    unique_id = uuid.uuid4().hex
+    admin = User(
+        name="Admin User",
+        username=f"adminuser_{unique_id}",
+        email=f"admin_{unique_id}@example.com",
+        role=UserRole.ADMIN
+    )
     admin.set_password("adminpass")
     db_session.add(admin)
     db_session.commit()

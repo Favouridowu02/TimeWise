@@ -8,12 +8,47 @@ from models.base_model import db
 from models.user import User
 from datetime import datetime
 import uuid
+from flasgger import swag_from
 
 progress_bp = Blueprint('progress', __name__)
 
 
-@progress_bp.route('/progress', methods=['POST'])
+@progress_bp.route('/', methods=['POST'], strict_slashes=False)
 @jwt_required()
+@swag_from({
+    'tags': ['Progress'],
+    'summary': 'Create progress entry',
+    'description': 'Create a new progress entry for the authenticated user.',
+    'parameters': [
+        {
+            'name': 'body',
+            'in': 'body',
+            'required': True,
+            'schema': {
+                'type': 'object',
+                'properties': {
+                    'description': {'type': 'string', 'description': 'Progress description'},
+                    'status': {'type': 'string', 'description': 'Progress status'}
+                },
+                'required': ['description', 'status']
+            }
+        }
+    ],
+    'responses': {
+        201: {
+            'description': 'Progress entry created',
+            'examples': {'application/json': {'id': 'uuid', 'user_id': 'uuid', 'description': 'desc', 'status': 'done', 'created_at': '2024-06-01T12:00:00Z'}}
+        },
+        400: {
+            'description': 'Invalid input',
+            'examples': {'application/json': {'error': 'Invalid input'}}
+        },
+        500: {
+            'description': 'Server error',
+            'examples': {'application/json': {'error': 'error message'}}
+        }
+    }
+})
 def create_progress():
     """
         Create a new progress entry for the authenticated user.
@@ -38,8 +73,25 @@ def create_progress():
         return jsonify({"error": str(e)}), 500
 
 
-@progress_bp.route('/progress', methods=['GET'])
+@progress_bp.route('/', methods=['GET'], strict_slashes=False)
 @jwt_required()
+@swag_from({
+    'tags': ['Progress'],
+    'summary': 'Get user progress',
+    'description': 'Retrieve all progress entries for the authenticated user.',
+    'responses': {
+        200: {
+            'description': 'List of progress entries',
+            'examples': {'application/json': [
+                {'id': 'uuid', 'user_id': 'uuid', 'description': 'desc', 'status': 'done', 'created_at': '2024-06-01T12:00:00Z'}
+            ]}
+        },
+        500: {
+            'description': 'Server error',
+            'examples': {'application/json': {'error': 'error message'}}
+        }
+    }
+})
 def get_progress():
     """
     Retrieve all progress entries for the authenticated user.

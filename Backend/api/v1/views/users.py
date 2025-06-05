@@ -10,6 +10,7 @@ from datetime import datetime
 import uuid
 import logging
 from utils.decorators import admin_required # Import the decorator
+from flasgger import swag_from
 
 admin_bp = Blueprint('admin', __name__)
 
@@ -17,6 +18,23 @@ admin_bp = Blueprint('admin', __name__)
 @admin_bp.route('/users', methods=['GET'])
 @jwt_required()
 @admin_required
+@swag_from({
+    'tags': ['Admin'],
+    'summary': 'List all users',
+    'description': 'Retrieve a list of all users (Admin only).',
+    'responses': {
+        200: {
+            'description': 'List of users',
+            'examples': {'application/json': [
+                {'id': 'uuid', 'email': 'user@example.com', 'username': 'user', 'role': 'user'}
+            ]}
+        },
+        500: {
+            'description': 'Failed to retrieve users',
+            'examples': {'application/json': {'error': 'Failed to retrieve users'}}
+        }
+    }
+})
 def get_all_users():
     """Retrieve a List of all users (Admin only)."""
     # RBAC check is now handled by the decorator
@@ -33,7 +51,25 @@ def get_all_users():
 
 @admin_bp.route('/users/<uuid:user_id>', methods=['GET'])
 @jwt_required()
-@admin_required # Apply the decorator
+@admin_required
+@swag_from({
+    'tags': ['Admin'],
+    'summary': 'Get user by ID',
+    'description': 'Get a specific user by ID (Admin only).',
+    'parameters': [
+        {'name': 'user_id', 'in': 'path', 'type': 'string', 'required': True, 'description': 'User UUID'}
+    ],
+    'responses': {
+        200: {
+            'description': 'User found',
+            'examples': {'application/json': {'id': 'uuid', 'email': 'user@example.com', 'username': 'user', 'role': 'user'}}
+        },
+        404: {
+            'description': 'User not found',
+            'examples': {'application/json': {'error': 'User not found'}}
+        }
+    }
+})
 def get_user_by_id(user_id):
     """Get a specific user by ID (Admin only)."""
     # RBAC check is now handled by the decorator
@@ -49,7 +85,52 @@ def get_user_by_id(user_id):
 
 @admin_bp.route('/users/<uuid:user_id>', methods=['PUT'])
 @jwt_required()
-@admin_required # Apply the decorator
+@admin_required
+@swag_from({
+    'tags': ['Admin'],
+    'summary': 'Update user by ID',
+    'description': 'Update a specific user by ID (Admin only).',
+    'parameters': [
+        {'name': 'user_id', 'in': 'path', 'type': 'string', 'required': True, 'description': 'User UUID'},
+        {
+            'name': 'body',
+            'in': 'body',
+            'required': True,
+            'schema': {
+                'type': 'object',
+                'properties': {
+                    'name': {'type': 'string'},
+                    'username': {'type': 'string'},
+                    'email': {'type': 'string'},
+                    'timezone': {'type': 'string'},
+                    'language': {'type': 'string'},
+                    'profile_image': {'type': 'string'},
+                    'bio': {'type': 'string'},
+                    'email_verified': {'type': 'boolean'},
+                    'role': {'type': 'string'}
+                }
+            }
+        }
+    ],
+    'responses': {
+        200: {
+            'description': 'User updated',
+            'examples': {'application/json': {'id': 'uuid', 'email': 'user@example.com', 'username': 'user', 'role': 'admin'}}
+        },
+        400: {
+            'description': 'Invalid input',
+            'examples': {'application/json': {'error': 'Invalid input'}}
+        },
+        404: {
+            'description': 'User not found',
+            'examples': {'application/json': {'error': 'User not found'}}
+        },
+        500: {
+            'description': 'Failed to update user',
+            'examples': {'application/json': {'error': 'Failed to update user'}}
+        }
+    }
+})
 def update_user_by_id(user_id):
     """Update a specific user by ID (Admin only)."""
     # RBAC check is now handled by the decorator
@@ -84,7 +165,29 @@ def update_user_by_id(user_id):
 
 @admin_bp.route('/users/<uuid:user_id>', methods=['DELETE'])
 @jwt_required()
-@admin_required # Apply the decorator
+@admin_required
+@swag_from({
+    'tags': ['Admin'],
+    'summary': 'Delete user by ID',
+    'description': 'Delete a specific user by ID (Admin only).',
+    'parameters': [
+        {'name': 'user_id', 'in': 'path', 'type': 'string', 'required': True, 'description': 'User UUID'}
+    ],
+    'responses': {
+        200: {
+            'description': 'User deleted',
+            'examples': {'application/json': {'message': 'User deleted successfully'}}
+        },
+        404: {
+            'description': 'User not found',
+            'examples': {'application/json': {'error': 'User not found'}}
+        },
+        500: {
+            'description': 'Failed to delete user',
+            'examples': {'application/json': {'error': 'Failed to delete user'}}
+        }
+    }
+})
 def delete_user_by_id(user_id):
     """Delete a specific user by ID (Admin only)."""
     # RBAC check is now handled by the decorator

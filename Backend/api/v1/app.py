@@ -20,6 +20,9 @@ from dotenv import load_dotenv
 from flask_jwt_extended import JWTManager
 from utils.logging_utils import setup_logging
 
+# API documentation - Swagger UI
+from flasgger import Swagger
+
 load_dotenv()
 
 
@@ -44,6 +47,32 @@ def create_app(config_name="development"):
 
     # Initialize Flask-Mail
     mail = Mail(app)
+
+    # Initialize Swagger UI
+    template = {
+        "swagger": "2.0",
+        "info": {
+            "title": "Timewise API",
+            "description": "This is the API documentation for Timewise, which provides an interface for interacting with the Backend application.",
+            "version": "1.0"
+        },
+        "basePath": "/api/v1",
+        "schemes": ["http", "https"],
+        "securityDefinitions": {
+            "Bearer": {
+                "type": "apiKey",
+                "name": "Authorization",
+                "in": "header",
+                "description": "JWT Authorization header using the Bearer scheme. Example: 'Authorization: Bearer {token}'"
+            }
+        },
+        "security": [{"Bearer": []}]
+    }
+    app.config["SWAGGER"] = {
+        'title': "Timewise API",
+        'uiversion': 3
+    }
+    swagger = Swagger(app, template=template)
 
     # Register blueprints
     app.register_blueprint(auth_bp, url_prefix="/api/v1/auth")

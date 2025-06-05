@@ -11,6 +11,7 @@ import uuid
 from models.analytics import Analytics
 from models.task import Task
 import logging 
+from flasgger import swag_from
 
 
 analytics_bp = Blueprint('analytics', __name__)
@@ -18,6 +19,31 @@ logger = logging.getLogger(__name__)
 
 @analytics_bp.route('/analytics', methods=['GET'])
 @jwt_required()
+@swag_from({
+    'tags': ['Analytics'],
+    'summary': 'Get user analytics',
+    'description': 'Retrieve analytics for the current user, including total tasks, completed tasks, and total time spent.',
+    'responses': {
+        200: {
+            'description': 'Analytics data retrieved successfully',
+            'examples': {
+                'application/json': {
+                    'total_tasks': 5,
+                    'completed_tasks': 3,
+                    'total_time_spent': '3:30:00'
+                }
+            }
+        },
+        404: {
+            'description': 'User not found',
+            'examples': {'application/json': {'error': 'User not found'}}
+        },
+        500: {
+            'description': 'Failed to calculate analytics',
+            'examples': {'application/json': {'error': 'Failed to calculate analytics'}}
+        }
+    }
+})
 def get_user_analytics():
     """Retrieve analytics for the current user."""
     user_id = get_jwt_identity()
@@ -51,6 +77,53 @@ def get_user_analytics():
 
 @analytics_bp.route('/analytics', methods=['POST'])
 @jwt_required()
+@swag_from({
+    'tags': ['Analytics'],
+    'summary': 'Create analytics entry',
+    'description': 'Create a new analytics entry for the current user for a specific task.',
+    'parameters': [
+        {
+            'name': 'body',
+            'in': 'body',
+            'required': True,
+            'schema': {
+                'type': 'object',
+                'properties': {
+                    'task_id': {'type': 'string', 'description': 'The ID of the task'},
+                    'time_spent': {'type': 'integer', 'description': 'Time spent in seconds'}
+                },
+                'required': ['task_id', 'time_spent']
+            }
+        }
+    ],
+    'responses': {
+        201: {
+            'description': 'Analytics entry created successfully',
+            'examples': {
+                'application/json': {
+                    'message': 'Analytics entry created successfully',
+                    'analytics': {
+                        'user_id': 'user-uuid',
+                        'task_id': 'task-uuid',
+                        'total_time_spent': '1:00:00'
+                    }
+                }
+            }
+        },
+        400: {
+            'description': 'Invalid input',
+            'examples': {'application/json': {'error': 'Invalid input'}}
+        },
+        404: {
+            'description': 'User or Task not found',
+            'examples': {'application/json': {'error': 'User not found'}}
+        },
+        500: {
+            'description': 'Failed to create analytics entry',
+            'examples': {'application/json': {'error': 'Failed to create analytics entry'}}
+        }
+    }
+})
 def create_user_analytics():
     """Create a new analytics entry for the current user."""
     user_id = get_jwt_identity()
