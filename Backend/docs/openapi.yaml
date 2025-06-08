@@ -1,0 +1,655 @@
+openapi: 3.0.3
+info:
+  title: TimeWis API
+  description: |
+    The TimeWise API provides endpoints for user authentication, task management, progress tracking, analytics, and admin user management. All endpoints (except registration and login) require JWT authentication via the `Authorization: Bearer <token>` header.
+  version: 1.0.0
+servers:
+  - url: http://localhost:5000/api/v1
+    description: Local development server
+security:
+  - BearerAuth: []
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        email:
+          type: string
+        username:
+          type: string
+        role:
+          type: string
+        name:
+          type: string
+        timezone:
+          type: string
+        language:
+          type: string
+        profile_image:
+          type: string
+        bio:
+          type: string
+        email_verified:
+          type: boolean
+      required: [id, email, username, role]
+    Task:
+      type: object
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+        description:
+          type: string
+        user_id:
+          type: string
+        completed:
+          type: boolean
+        total_time_spent:
+          type: string
+      required: [id, title, description, user_id]
+    Progress:
+      type: object
+      properties:
+        id:
+          type: string
+        user_id:
+          type: string
+        description:
+          type: string
+        status:
+          type: string
+        created_at:
+          type: string
+      required: [id, user_id, description, status, created_at]
+    Analytics:
+      type: object
+      properties:
+        user_id:
+          type: string
+        task_id:
+          type: string
+        total_time_spent:
+          type: string
+      required: [user_id, task_id, total_time_spent]
+paths:
+  /auth/register:
+    post:
+      summary: Register a new user
+      tags: [Authentication]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password, name, username]
+              properties:
+                email:
+                  type: string
+                password:
+                  type: string
+                name:
+                  type: string
+                username:
+                  type: string
+      responses:
+        '201':
+          description: User registered successfully
+          content:
+            application/json:
+              example:
+                message: User registered successfully
+                access_token: jwt-token
+                user:
+                  id: uuid
+                  email: user@example.com
+                  username: user
+                  role: user
+        '400':
+          description: Missing required field
+          content:
+            application/json:
+              example: {"error": "Missing required field: email"}
+        '409':
+          description: User already exists
+          content:
+            application/json:
+              example: {"error": "User with this email already exists"}
+        '500':
+          description: Registration failed
+          content:
+            application/json:
+              example: {"error": "Registration failed"}
+  /auth/login:
+    post:
+      summary: User login
+      tags: [Authentication]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [password]
+              properties:
+                email:
+                  type: string
+                username:
+                  type: string
+                password:
+                  type: string
+      responses:
+        '200':
+          description: Login successful
+          content:
+            application/json:
+              example:
+                message: Login successful
+                access_token: jwt-token
+                user:
+                  id: uuid
+                  email: user@example.com
+                  username: user
+                  role: user
+        '400':
+          description: Missing credentials
+          content:
+            application/json:
+              example: {"error": "Username or email and password are required"}
+        '401':
+          description: Invalid credentials
+          content:
+            application/json:
+              example: {"error": "Invalid credentials"}
+        '500':
+          description: Login failed
+          content:
+            application/json:
+              example: {"error": "Login failed"}
+  /auth/profile:
+    get:
+      summary: Get user profile
+      tags: [Authentication]
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: User profile
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '404':
+          description: User not found
+          content:
+            application/json:
+              example: {"error": "User not found"}
+    put:
+      summary: Update user profile
+      tags: [Authentication]
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                timezone:
+                  type: string
+                language:
+                  type: string
+                profile_image:
+                  type: string
+                bio:
+                  type: string
+                current_password:
+                  type: string
+                new_password:
+                  type: string
+      responses:
+        '200':
+          description: Profile updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              example: {"error": "Invalid input"}
+        '404':
+          description: User not found
+          content:
+            application/json:
+              example: {"error": "User not found"}
+  /task/tasks:
+    get:
+      summary: Get all tasks for the current user
+      tags: [Tasks]
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: List of tasks
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Task'
+        '404':
+          description: User not found
+          content:
+            application/json:
+              example: {"error": "User not found"}
+    post:
+      summary: Create a new task
+      tags: [Tasks]
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [title, description]
+              properties:
+                title:
+                  type: string
+                description:
+                  type: string
+      responses:
+        '201':
+          description: Task created
+          content:
+            application/json:
+              example:
+                message: Task created successfully
+                task:
+                  id: 1
+                  title: Task 1
+                  description: Desc
+                  user_id: uuid
+        '400':
+          description: Missing required field
+          content:
+            application/json:
+              example: {"error": "Missing required field: title"}
+        '404':
+          description: User not found
+          content:
+            application/json:
+              example: {"error": "User not found"}
+  /task/tasks/{task_id}:
+    get:
+      summary: Get a specific task by ID
+      tags: [Tasks]
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: task_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Task found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Task'
+        '404':
+          description: Task or user not found
+          content:
+            application/json:
+              example: {"error": "Task not found"}
+    put:
+      summary: Update a specific task by ID
+      tags: [Tasks]
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: task_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                title:
+                  type: string
+                description:
+                  type: string
+      responses:
+        '200':
+          description: Task updated
+          content:
+            application/json:
+              example:
+                message: Task updated successfully
+                task:
+                  id: 1
+                  title: Task 1
+                  description: Desc
+                  user_id: uuid
+        '404':
+          description: Task or user not found
+          content:
+            application/json:
+              example: {"error": "Task not found"}
+  /progress/:
+    get:
+      summary: Get all progress entries for the authenticated user
+      tags: [Progress]
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: List of progress entries
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Progress'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              example: {"error": "error message"}
+    post:
+      summary: Create a new progress entry
+      tags: [Progress]
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [description, status]
+              properties:
+                description:
+                  type: string
+                status:
+                  type: string
+      responses:
+        '201':
+          description: Progress entry created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Progress'
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              example: {"error": "Invalid input"}
+        '500':
+          description: Server error
+          content:
+            application/json:
+              example: {"error": "error message"}
+  /analytics:
+    get:
+      summary: Get analytics for the current user
+      tags: [Analytics]
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Analytics data
+          content:
+            application/json:
+              example:
+                total_tasks: 5
+                completed_tasks: 3
+                total_time_spent: "3:30:00"
+        '404':
+          description: User not found
+          content:
+            application/json:
+              example: {"error": "User not found"}
+        '500':
+          description: Failed to calculate analytics
+          content:
+            application/json:
+              example: {"error": "Failed to calculate analytics"}
+    post:
+      summary: Create a new analytics entry for a task
+      tags: [Analytics]
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [task_id, time_spent]
+              properties:
+                task_id:
+                  type: string
+                time_spent:
+                  type: integer
+      responses:
+        '201':
+          description: Analytics entry created successfully
+          content:
+            application/json:
+              example:
+                message: Analytics entry created successfully
+                analytics:
+                  user_id: user-uuid
+                  task_id: task-uuid
+                  total_time_spent: "1:00:00"
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              example: {"error": "Invalid input"}
+        '404':
+          description: User or Task not found
+          content:
+            application/json:
+              example: {"error": "Task not found"}
+        '500':
+          description: Failed to create analytics entry
+          content:
+            application/json:
+              example: {"error": "Failed to create analytics entry"}
+  /admin/users:
+    get:
+      summary: List all users (admin only)
+      tags: [Admin]
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: List of users
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/User'
+        '500':
+          description: Failed to retrieve users
+          content:
+            application/json:
+              example: {"error": "Failed to retrieve users"}
+  /admin/users/{user_id}:
+    get:
+      summary: Get user by ID (admin only)
+      tags: [Admin]
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: user_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: User found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '404':
+          description: User not found
+          content:
+            application/json:
+              example: {"error": "User not found"}
+    put:
+      summary: Update user by ID (admin only)
+      tags: [Admin]
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: user_id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                username:
+                  type: string
+                email:
+                  type: string
+                timezone:
+                  type: string
+                language:
+                  type: string
+                profile_image:
+                  type: string
+                bio:
+                  type: string
+                email_verified:
+                  type: boolean
+                role:
+                  type: string
+      responses:
+        '200':
+          description: User updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              example: {"error": "Invalid input"}
+        '404':
+          description: User not found
+          content:
+            application/json:
+              example: {"error": "User not found"}
+        '500':
+          description: Failed to update user
+          content:
+            application/json:
+              example: {"error": "Failed to update user"}
+    delete:
+      summary: Delete user by ID (admin only)
+      tags: [Admin]
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: user_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: User deleted
+          content:
+            application/json:
+              example: {"message": "User deleted successfully"}
+        '404':
+          description: User not found
+          content:
+            application/json:
+              example: {"error": "User not found"}
+        '500':
+          description: Failed to delete user
+          content:
+            application/json:
+              example: {"error": "Failed to delete user"}
+  /admin/users/{user_id}/role:
+    put:
+      summary: Update user role (admin only)
+      tags: [Admin]
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: user_id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [role]
+              properties:
+                role:
+                  type: string
+      responses:
+        '200':
+          description: User role updated
+          content:
+            application/json:
+              example: {"message": "User johndoe's role updated to ADMIN"}
+        '400':
+          description: Invalid role
+          content:
+            application/json:
+              example: {"error": "Invalid role. Valid roles are: ['USER', 'ADMIN']"}
+        '404':
+          description: User not found
+          content:
+            application/json:
+              example: {"error": "User not found"}
+        '500':
+          description: Failed to update user role
+          content:
+            application/json:
+              example: {"error": "Failed to update user role"}

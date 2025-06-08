@@ -4,3 +4,8 @@ After Downloading the postgresql: using sudo apt install postgresql
 Refer to postgresql documentation for more information on the database set up.
 
 DROP TABLE analytics, progress, tasks, users
+
+
+
+TODOS:
+Implement the Alembic feature for database migration
