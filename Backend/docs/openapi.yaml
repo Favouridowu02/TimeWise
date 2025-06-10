@@ -1,6 +1,6 @@
 openapi: 3.0.3
 info:
-  title: TimeWis API
+  title: TimeWise API
   description: |
     The TimeWise API provides endpoints for user authentication, task management, progress tracking, analytics, and admin user management. All endpoints (except registration and login) require JWT authentication via the `Authorization: Bearer <token>` header.
   version: 1.0.0
