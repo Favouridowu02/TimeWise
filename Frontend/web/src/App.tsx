@@ -1,16 +1,15 @@
-import { useState } from 'react';
-import reactLogo from './assets/react.svg';
-import viteLogo from '/vite.svg';
 import './App.css';
+import AppRouter from './routes/AppRouter';
+import { BrowserRouter } from 'react-router-dom';
 
 function App() {
   return (
-    <>
+    <BrowserRouter>
       <div>
-        <p>This is timewise</p>
+        <AppRouter />
       </div>
-    </>
+    </BrowserRouter>
   );
-};
+}
 
 export default App;
