@@ -1,1 +1,1 @@
-## this containes the Mobile codebase 
+## this contains the Mobile codebase 
