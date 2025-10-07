@@ -410,3 +410,33 @@ def email_verification():
     user.save()
 
     return jsonify({'message': 'Email verified successfully'}), 200
+
+@auth_bp.route('/refresh', methods=['POST'])
+@jwt_required(refresh=True)
+def refresh():
+    """Refresh the access token."""
+    current_user_id = get_jwt_identity()
+    
+    # Generate a new access token
+    new_access_token = create_access_token(identity=current_user_id)
+    
+    return jsonify({'access_token': new_access_token}), 200
+
+@auth_bp.route('/me', methods=['GET'])
+@jwt_required()
+def me():
+    """Get the current user's profile."""
+    user_id = get_jwt_identity()
+    
+    try:
+        user_id = uuid.UUID(user_id)
+    except ValueError:
+        return jsonify({'error': 'Invalid user ID format'}), 400
+
+    user = db.session.get(User, user_id)
+    
+    if not user:
+        return jsonify({'error': 'User not found'}), 404
+    
+    return jsonify(user.to_json()), 200
+
